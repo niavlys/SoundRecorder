@@ -21,6 +21,7 @@ import com.danielkim.soundrecorder.RecordingItem;
 import com.melnykov.fab.FloatingActionButton;
 
 import java.io.IOException;
+import java.util.ListIterator;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -39,6 +40,8 @@ public class PlaybackFragment extends DialogFragment{
 
     private SeekBar mSeekBar = null;
     private FloatingActionButton mPlayButton = null;
+    private FloatingActionButton mForwardButton = null;
+    private FloatingActionButton mBackwardButton = null;
     private TextView mCurrentProgressTextView = null;
     private TextView mFileNameTextView = null;
     private TextView mFileLengthTextView = null;
@@ -93,7 +96,7 @@ public class PlaybackFragment extends DialogFragment{
                 (getResources().getColor(R.color.primary), getResources().getColor(R.color.primary));
         mSeekBar.getProgressDrawable().setColorFilter(filter);
         mSeekBar.getThumb().setColorFilter(filter);
-
+        prepareMediaPlayerFromPoint(0);
         mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -143,6 +146,22 @@ public class PlaybackFragment extends DialogFragment{
             public void onClick(View v) {
                 onPlay(isPlaying);
                 isPlaying = !isPlaying;
+            }
+        });
+
+        mBackwardButton = (FloatingActionButton) view.findViewById(R.id.fab_backward);
+        mBackwardButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                seekBack();
+            }
+        });
+
+        mForwardButton = (FloatingActionButton) view.findViewById(R.id.fab_forward);
+        mForwardButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                seekForward();
             }
         });
 
@@ -203,6 +222,46 @@ public class PlaybackFragment extends DialogFragment{
         } else {
             //pause the MediaPlayer
             pausePlaying();
+        }
+    }
+
+    private Integer findNext(){
+        Integer currentPos =  mMediaPlayer.getCurrentPosition();
+        ListIterator li = item.getMarkers().listIterator();
+        while(li.hasNext()){
+            Long next = (Long)li.next();
+            if (next>currentPos){
+                return (int) (long) next;
+            }
+        }
+        return mMediaPlayer.getDuration();
+    }
+
+    private Integer findPrev(){
+        Integer currentPos =  mMediaPlayer.getCurrentPosition();
+        ListIterator li = item.getMarkers().listIterator(item.getMarkers().size());
+        while(li.hasPrevious()){
+            Long prev = (Long)li.previous();
+            if (prev<currentPos){
+                return (int) (long) prev;
+            }
+        }
+        return 0;
+    }
+
+    private void seekBack(){
+        if(mMediaPlayer != null) {
+            mMediaPlayer.seekTo(findPrev());
+            updateSeekBar();
+
+        }
+    }
+
+    private void seekForward(){
+        if(mMediaPlayer != null) {
+            mMediaPlayer.seekTo(findNext());
+            updateSeekBar();
+
         }
     }
 
@@ -315,6 +374,6 @@ public class PlaybackFragment extends DialogFragment{
     };
 
     private void updateSeekBar() {
-        mHandler.postDelayed(mRunnable, 1000);
+        mHandler.postDelayed(mRunnable, 100);
     }
 }

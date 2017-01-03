@@ -8,7 +8,9 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 
 import com.danielkim.soundrecorder.listeners.OnDatabaseChangedListener;
+import com.danielkim.soundrecorder.listeners.Serializer;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 
 /**
@@ -22,7 +24,7 @@ public class DBHelper extends SQLiteOpenHelper {
     private static OnDatabaseChangedListener mOnDatabaseChangedListener;
 
     public static final String DATABASE_NAME = "saved_recordings.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 3;
 
     public static abstract class DBHelperItem implements BaseColumns {
         public static final String TABLE_NAME = "saved_recordings";
@@ -31,6 +33,7 @@ public class DBHelper extends SQLiteOpenHelper {
         public static final String COLUMN_NAME_RECORDING_FILE_PATH = "file_path";
         public static final String COLUMN_NAME_RECORDING_LENGTH = "length";
         public static final String COLUMN_NAME_TIME_ADDED = "time_added";
+        public static final String COLUMN_NAME_LAZY_MARKERS = "lazy_markers"; //comma separated Long list of timestamp; should be refactored// TODO: 27/12/2016
     }
 
     private static final String TEXT_TYPE = " TEXT";
@@ -41,9 +44,9 @@ public class DBHelper extends SQLiteOpenHelper {
                     DBHelperItem.COLUMN_NAME_RECORDING_NAME + TEXT_TYPE + COMMA_SEP +
                     DBHelperItem.COLUMN_NAME_RECORDING_FILE_PATH + TEXT_TYPE + COMMA_SEP +
                     DBHelperItem.COLUMN_NAME_RECORDING_LENGTH + " INTEGER " + COMMA_SEP +
-                    DBHelperItem.COLUMN_NAME_TIME_ADDED + " INTEGER " + ")";
+                    DBHelperItem.COLUMN_NAME_TIME_ADDED + " INTEGER " + COMMA_SEP +
+                    DBHelperItem.COLUMN_NAME_LAZY_MARKERS + TEXT_TYPE +")";
 
-    @SuppressWarnings("unused")
     private static final String SQL_DELETE_ENTRIES = "DROP TABLE IF EXISTS " + DBHelperItem.TABLE_NAME;
 
     @Override
@@ -53,6 +56,9 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // simply discard the data and start over
+        db.execSQL(SQL_DELETE_ENTRIES);
+        onCreate(db);
 
     }
 
@@ -72,7 +78,8 @@ public class DBHelper extends SQLiteOpenHelper {
                 DBHelperItem.COLUMN_NAME_RECORDING_NAME,
                 DBHelperItem.COLUMN_NAME_RECORDING_FILE_PATH,
                 DBHelperItem.COLUMN_NAME_RECORDING_LENGTH,
-                DBHelperItem.COLUMN_NAME_TIME_ADDED
+                DBHelperItem.COLUMN_NAME_TIME_ADDED,
+                DBHelperItem.COLUMN_NAME_LAZY_MARKERS
         };
         Cursor c = db.query(DBHelperItem.TABLE_NAME, projection, null, null, null, null, null);
         if (c.moveToPosition(position)) {
@@ -82,6 +89,7 @@ public class DBHelper extends SQLiteOpenHelper {
             item.setFilePath(c.getString(c.getColumnIndex(DBHelperItem.COLUMN_NAME_RECORDING_FILE_PATH)));
             item.setLength(c.getInt(c.getColumnIndex(DBHelperItem.COLUMN_NAME_RECORDING_LENGTH)));
             item.setTime(c.getLong(c.getColumnIndex(DBHelperItem.COLUMN_NAME_TIME_ADDED)));
+            item.setMarkers(Serializer.derialize(c.getString(c.getColumnIndex(DBHelperItem.COLUMN_NAME_LAZY_MARKERS))));
             c.close();
             return item;
         }
@@ -115,7 +123,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public long addRecording(String recordingName, String filePath, long length) {
+    public long addRecording(String recordingName, String filePath, long length, ArrayList markers) {
 
         SQLiteDatabase db = getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -123,6 +131,7 @@ public class DBHelper extends SQLiteOpenHelper {
         cv.put(DBHelperItem.COLUMN_NAME_RECORDING_FILE_PATH, filePath);
         cv.put(DBHelperItem.COLUMN_NAME_RECORDING_LENGTH, length);
         cv.put(DBHelperItem.COLUMN_NAME_TIME_ADDED, System.currentTimeMillis());
+        cv.put(DBHelperItem.COLUMN_NAME_LAZY_MARKERS,Serializer.serialize(markers));
         long rowId = db.insert(DBHelperItem.TABLE_NAME, null, cv);
 
         if (mOnDatabaseChangedListener != null) {
@@ -152,6 +161,7 @@ public class DBHelper extends SQLiteOpenHelper {
         cv.put(DBHelperItem.COLUMN_NAME_RECORDING_FILE_PATH, item.getFilePath());
         cv.put(DBHelperItem.COLUMN_NAME_RECORDING_LENGTH, item.getLength());
         cv.put(DBHelperItem.COLUMN_NAME_TIME_ADDED, item.getTime());
+        cv.put(DBHelperItem.COLUMN_NAME_LAZY_MARKERS,Serializer.serialize(item.getMarkers()));
         cv.put(DBHelperItem._ID, item.getId());
         long rowId = db.insert(DBHelperItem.TABLE_NAME, null, cv);
         if (mOnDatabaseChangedListener != null) {

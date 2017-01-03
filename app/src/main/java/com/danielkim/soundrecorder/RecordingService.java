@@ -14,6 +14,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.danielkim.soundrecorder.activities.MainActivity;
+import com.danielkim.soundrecorder.listeners.Serializer;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +22,7 @@ import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
-
+import java.util.ArrayList;
 /**
  * Created by Daniel on 12/28/2014.
  */
@@ -35,7 +36,7 @@ public class RecordingService extends Service {
     private MediaRecorder mRecorder = null;
 
     private DBHelper mDatabase;
-
+    private ArrayList mMarkers;
     private long mStartingTimeMillis = 0;
     private long mElapsedMillis = 0;
     private int mElapsedSeconds = 0;
@@ -62,7 +63,10 @@ public class RecordingService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        startRecording();
+        mMarkers = Serializer.derialize(intent.getStringExtra("markers"));
+        if (mMarkers == null){
+            startRecording();
+        }
         return START_STICKY;
     }
 
@@ -130,7 +134,8 @@ public class RecordingService extends Service {
         mRecorder = null;
 
         try {
-            mDatabase.addRecording(mFileName, mFilePath, mElapsedMillis);
+            mDatabase.addRecording(mFileName, mFilePath, mElapsedMillis,mMarkers);
+            mMarkers.clear();
 
         } catch (Exception e){
             Log.e(LOG_TAG, "exception", e);

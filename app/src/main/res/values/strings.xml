@@ -39,6 +39,7 @@
     <string name="default_file_name">My Recording</string>
     <string name="record_prompt">Tap the button to start recording</string>
     <string name="record_in_progress">Recording</string>
+    <string name="marker_added">Marker added...</string>
 
     <string name="send_to">Send to</string>
 

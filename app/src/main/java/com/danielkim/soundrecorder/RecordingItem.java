@@ -3,6 +3,10 @@ package com.danielkim.soundrecorder;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.danielkim.soundrecorder.listeners.Serializer;
+
+import java.util.ArrayList;
+
 /**
  * Created by Daniel on 12/30/2014.
  */
@@ -12,6 +16,7 @@ public class RecordingItem implements Parcelable {
     private int mId; //id in database
     private int mLength; // length of recording in seconds
     private long mTime; // date/time of the recording
+    private ArrayList mMarkers;
 
     public RecordingItem()
     {
@@ -23,6 +28,7 @@ public class RecordingItem implements Parcelable {
         mId = in.readInt();
         mLength = in.readInt();
         mTime = in.readLong();
+        mMarkers = Serializer.derialize(in.readString());
     }
 
     public String getFilePath() {
@@ -65,6 +71,16 @@ public class RecordingItem implements Parcelable {
         mTime = time;
     }
 
+    public ArrayList getMarkers() {
+        return mMarkers;
+    }
+
+    public void setMarkers(ArrayList markers) {
+        mMarkers = markers;
+    }
+
+
+
     public static final Parcelable.Creator<RecordingItem> CREATOR = new Parcelable.Creator<RecordingItem>() {
         public RecordingItem createFromParcel(Parcel in) {
             return new RecordingItem(in);
@@ -82,6 +98,7 @@ public class RecordingItem implements Parcelable {
         dest.writeLong(mTime);
         dest.writeString(mFilePath);
         dest.writeString(mName);
+        dest.writeString(Serializer.serialize(mMarkers));
     }
 
     @Override
