@@ -7,7 +7,6 @@ import android.graphics.LightingColorFilter;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.util.Log;
 import android.view.View;
@@ -16,11 +15,13 @@ import android.view.WindowManager;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+//import com.danielkim.soundrecorder.SeekBar;
 import com.danielkim.soundrecorder.R;
 import com.danielkim.soundrecorder.RecordingItem;
 import com.melnykov.fab.FloatingActionButton;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.ListIterator;
 import java.util.concurrent.TimeUnit;
 
@@ -77,8 +78,6 @@ public class PlaybackFragment extends DialogFragment{
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
     }
-
-    @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
@@ -97,7 +96,9 @@ public class PlaybackFragment extends DialogFragment{
         mSeekBar.getProgressDrawable().setColorFilter(filter);
         mSeekBar.getThumb().setColorFilter(filter);
         prepareMediaPlayerFromPoint(0);
+
         mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if(mMediaPlayer != null && fromUser) {
@@ -297,6 +298,15 @@ public class PlaybackFragment extends DialogFragment{
         getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
+    private int[] convertIntegers(ArrayList<Long> integers)
+    {
+        int[] ret = new int[integers.size()];
+        for (int i=0; i < ret.length; i++)
+        {
+            ret[i] = integers.get(i).intValue();
+        }
+        return ret;
+    }
     private void prepareMediaPlayerFromPoint(int progress) {
         //set mediaPlayer to start from middle of the audio file
 
@@ -306,8 +316,11 @@ public class PlaybackFragment extends DialogFragment{
             mMediaPlayer.setDataSource(item.getFilePath());
             mMediaPlayer.prepare();
             mSeekBar.setMax(mMediaPlayer.getDuration());
+
             mMediaPlayer.seekTo(progress);
 
+            //mSeekBar.setDots(convertIntegers(item.getMarkers()));
+            //mSeekBar.setDotsDrawable(R.drawable.dot);
             mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mp) {

@@ -8,7 +8,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 
 import com.danielkim.soundrecorder.listeners.OnDatabaseChangedListener;
-import com.danielkim.soundrecorder.listeners.Serializer;
 
 import java.util.ArrayList;
 import java.util.Comparator;

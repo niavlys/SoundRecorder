@@ -14,7 +14,6 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.danielkim.soundrecorder.activities.MainActivity;
-import com.danielkim.soundrecorder.listeners.Serializer;
 
 import java.io.File;
 import java.io.IOException;

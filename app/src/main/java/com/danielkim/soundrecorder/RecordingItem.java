@@ -3,8 +3,6 @@ package com.danielkim.soundrecorder;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.danielkim.soundrecorder.listeners.Serializer;
-
 import java.util.ArrayList;
 
 /**
